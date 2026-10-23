@@ -12,7 +12,7 @@ def plevel_call(nc_file_in,nc_file_out, var_names = '-a', p_levels='default', ma
 
     check_gfdl_directories_set()
 
-    interper = './plevel.sh'
+    interper = './scripts/plevel.sh'
     nc_file = ' -i '+nc_file_in
     out_file = ' -o '+nc_file_out
     if p_levels == 'model':
