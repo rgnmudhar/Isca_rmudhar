@@ -27,9 +27,9 @@ do_simple_global_value = False
 
 inputfiles = [os.path.join(GFDL_BASE,'input/rrtm_input_files/ozone_1990.nc'),\
                 os.path.join(base_dir,'input/era-spectral7_T42_64x128.out.nc'),\
-                os.path.join(base_dir,'input/soc_ga3_bucket_jra_55_ice_temps.nc'),\
                 os.path.join(base_dir,'input/sp_lw_ga3_1.txt'),\
                 os.path.join(base_dir,'input/sp_sw_ga3_0.txt'),\
+                os.path.join(base_dir,'input/sst_clim_amip.nc'),\
                 os.path.join(base_dir,'input/siconc_clim_amip.nc'),\
                 os.path.join(base_dir,'input/ozone_1990_cmip5.nc')]
 
