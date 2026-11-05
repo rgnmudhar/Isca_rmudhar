@@ -20,7 +20,7 @@ cb= SocratesCodeBase.from_directory(GFDL_BASE)
 # create an Experiment object to handle the configuration of model parameters
 # and output diagnostics
 
-exp = Experiment('base_set-up', codebase=cb)
+exp = Experiment('base_set-up_fixed_SSTs', codebase=cb)
 exp.clear_rundir()
 
 do_simple_global_value = False
@@ -150,7 +150,7 @@ exp.namelist = namelist = Namelist({
         'land_h_capacity_prefactor': 0.1,    #!What factor to multiply mixed-layer depth by over land. 
         'update_albedo_from_ice':True,
         'ice_albedo_value':0.7, 
-        # 'binary_ice_albedo':False,
+        'ice_albedo_method':'ramp_function', 
         'ice_file_name':'siconc_clim_amip',
         'specify_sst_over_sea_ice':False, 
         # 'linearly_interpolate_sea_ice_temp_and_sst':True,

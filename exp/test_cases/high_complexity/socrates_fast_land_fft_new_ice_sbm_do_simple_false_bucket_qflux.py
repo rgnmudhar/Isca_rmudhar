@@ -166,7 +166,7 @@ exp.namelist = namelist = Namelist({
         'land_h_capacity_prefactor': 0.1,    #!What factor to multiply mixed-layer depth by over land. 
         'update_albedo_from_ice':True,
         'ice_albedo_value':0.7, 
-        # 'binary_ice_albedo':False,
+        'ice_albedo_method':'ramp_function', 
         'ice_file_name':'siconc_clim_amip',
         'specify_sst_over_sea_ice':False, 
         # 'linearly_interpolate_sea_ice_temp_and_sst':True,
@@ -242,5 +242,5 @@ if __name__=="__main__":
         #Set up the experiment object, with the first argument being the experiment name.
         #This will be the name of the folder that the data will appear in.
         exp.run(241, use_restart=True, num_cores=NCORES, overwrite_data=False, restart_file = '/work/FAC/FGSE/IDYST/ddomeise/default/regan/Postdoc_Project_Isca/Isca/exp/test_cases/high_complexity/input/res0240.tar.gz', multi_node=False)
-        for i in range(242,601):
+        for i in range(242,721): # 720 months = 60 years
             exp.run(i, num_cores=NCORES, multi_node=False)
