@@ -51,7 +51,7 @@ diag.add_field('dynamics', 'temp', time_avg=True, files=['atmos_daily'])
 diag.add_field('dynamics', 'zsurf', time_avg=True, files=['atmos_daily'])
 diag.add_field('dynamics', 'height', time_avg=True, files=['atmos_daily'])
 diag.add_field('dynamics', 'omega', time_avg=True, files=['atmos_daily'])
-diag.add_field('atmosphere', 'flux_u', time_avg=True, files=['atmos_daily'])
+# diag.add_field('atmosphere', 'flux_u', time_avg=True, files=['atmos_daily'])
 
 exp.diag_table = diag
 exp.inputfiles = inputfiles
