@@ -1,3 +1,6 @@
+#!/bin/env python
+# -*- cofing: utf-8 -*-
+
 """A method for calculating seasonally-varying qfluxes, as described in Russell et al 1985 DOI:10.1016/0377-0265(85)90022-3"""
     
 import numpy as np
@@ -12,7 +15,9 @@ import matplotlib.pyplot as plt
 import os
 import pdb
 
-__author__='Stephen Thomson'
+import argparse # added
+
+__author__='Stephen Thomson and Regan Mudhar'
 
 
 def qflux_calc(dataset, model_params, output_file_name, ice_file_name=None, groupby_name='months', ignore_ice_for_calculation=False):
@@ -118,12 +123,12 @@ def upper_ocean_heat_content(dataset, model_params, time_varying_ice, dayofyear_
     sst_data=dataset['t_surf'].groupby(dayofyear_or_months).mean('time').load()
 
     if dayofyear_or_months=='months':
-        dataset['sst_clim']=(('months_ax','lat','lon'),sst_data)
+        dataset['sst_clim']=(('months_ax','lat','lon'),sst_data.data)
         sst_clim=dataset['sst_clim']
     else:
-        dataset['sst_clim_'+dayofyear_or_months]=((dayofyear_or_months+'_ax','lat','lon'),sst_data)
+        dataset['sst_clim_'+dayofyear_or_months]=((dayofyear_or_months+'_ax','lat','lon'),sst_data.data)
         sst_clim=dataset['sst_clim_'+dayofyear_or_months]
-        dataset['sst_clim']=((dayofyear_or_months+'_ax','lat','lon'),sst_data)
+        dataset['sst_clim']=((dayofyear_or_months+'_ax','lat','lon'),sst_data.data)
 
 #    weighted_sst_data=model_params['ocean_rho']*model_params['ocean_cp']*model_params['ml_depth']*sst_data*(1.0-dataset['land'])
     weighted_sst_data=model_params['ocean_rho']*model_params['ocean_cp']*model_params['ml_depth']*sst_clim*(1.0-dataset['land'])
@@ -172,16 +177,16 @@ def net_surf_energy_flux(dataset, model_params, dayofyear_or_months='months'):
     print('doing net surf energy flux')
 
     flux_sw_data=dataset['flux_sw'].groupby(dayofyear_or_months).mean('time')
-    dataset['flux_sw_clim']=((dayofyear_or_months+'_ax','lat','lon'),flux_sw_data)
+    dataset['flux_sw_clim']=((dayofyear_or_months+'_ax','lat','lon'),flux_sw_data.data)
 
     flux_lw_data=dataset['flux_lw'].groupby(dayofyear_or_months).mean('time')
-    dataset['flux_lw_clim']=((dayofyear_or_months+'_ax','lat','lon'),flux_lw_data)
+    dataset['flux_lw_clim']=((dayofyear_or_months+'_ax','lat','lon'),flux_lw_data.data)
 
     flux_t_data=dataset['flux_t'].groupby(dayofyear_or_months).mean('time')
-    dataset['flux_t_clim']=((dayofyear_or_months+'_ax','lat','lon'),flux_t_data)
+    dataset['flux_t_clim']=((dayofyear_or_months+'_ax','lat','lon'),flux_t_data.data)
 
     flux_lhe_data=dataset['flux_lhe'].groupby(dayofyear_or_months).mean('time')
-    dataset['flux_lhe_clim']=((dayofyear_or_months+'_ax','lat','lon'),flux_lhe_data)
+    dataset['flux_lhe_clim']=((dayofyear_or_months+'_ax','lat','lon'),flux_lhe_data.data)
 
 
     aav.area_average(dataset, 'flux_sw_clim', model_params, land_ocean_all='ocean_non_ice', axis_in=dayofyear_or_months+'_ax')
@@ -287,64 +292,66 @@ def check_surface_flux_dims(dataset, rad_scheme_type):
                 dataset['flux_lw'] = (new_dims, lwdn_sfc)
 
     elif lower_case_rad_scheme=='socrates':
-        print('Renaming variables to enable use of socrates radiation')        
-        dataset.rename({'soc_surf_flux_sw':'flux_sw'}, inplace=True)
-        dataset.rename({'soc_surf_flux_lw_down':'flux_lw'}, inplace=True)        
+        print('Renaming variables to enable use of socrates radiation')
+        dataset = dataset.rename({'soc_surf_flux_sw':'flux_sw', 'soc_surf_flux_lw_down':'flux_lw'}) 
+    return dataset
 
 if __name__ == "__main__":
-
     import nc_file_io_xarray as io
     import set_and_get_params as sagp
 
-    try:
-        GFDL_BASE        = os.environ['GFDL_BASE']
-        GFDL_WORK        = os.environ['GFDL_WORK']
-        GFDL_DATA        = os.environ['GFDL_DATA']        
-    except Exception as e:
-        print('Environment variables GFDL_BASE, GFDL_WORK, GFDL_DATA must be set')
-        exit(0)
+    parser = argparse.ArgumentParser(
+        prog='SST to qflux script',
+        description='Script used to generate qflux file from SST run')
 
+    #EXP1 = 'high_complexity_base_RAS_fixed_SSTs'
+    #EXP2 = 'base_set-up_RAS_fixed_SSTs'
+    #rundir = ${GFDL_BASE}/exp/test_cases/high_complexity
+    #datadir = ${GFDL_DATA}
+    parser.add_argument('EXP1')
+    parser.add_argument('EXP2')
+    parser.add_argument('rundir') #Folder containing the python script and input files that ran the experiment
+    parser.add_argument('datadir')
 
-    input_dir=GFDL_BASE
-    base_dir='/disca/share/sit204/data_from_isca_cpu/cssp_perturb_exps/control/'
-    land_file='input/era-spectral7_T42_64x128.out.nc'
-    base_exp_name='socrates_fast_land/' #Folder containing the python script and input files that ran the experiment
-    exp_name='soc_ga3_do_simple_false_cmip_o3_bucket/grouped_nc_files/' #Folder within the data directory where the files can be found
-#    ice_file_name=base_dir+'annual_mean_ice_albedo_change_test_mk2_4320_dt_rad_4/'+'run360/'+'atmos_monthly.nc'
+    args = parser.parse_args()
+
+    land_file='/input/era-spectral7_T42_64x128.out.nc'
+    exp_name=args.EXP2 #Folder within the data directory where the files can be found - CHANGE
+#   ice_file_name=args.datadir+'annual_mean_ice_albedo_change_test_mk2_4320_dt_rad_4/'+'run360/'+'atmos_monthly.nc'
     ice_file_name = None
     ignore_ice=True
-    output_file_name='soc_ga3_bucket_jra_55_ice_temps' #Proposed name of your output qflux file. Will also be qflux field name in q-flux netcdf file as the fortran assumes file-name = field name. No need to add '.nc' or any file paths in this variable as otherwise they will end up in the field name too. Output file will be stored in the same directory as this script.
+    output_file_name=args.EXP2+'_ice_temps' # CHANGE?
+    # ^^ Proposed name of your output qflux file. Will also be qflux field name in q-flux netcdf file as the fortran assumes file-name = field name. 
+    # No need to add '.nc' or any file paths in this variable as otherwise they will end up in the field name too. Output file will be stored in the same directory as this script.
 
-    start_file=121
-    end_file=3000
-    land_present=True
+    # CHANGED FOLLOWING 
+    start_file=241
+    end_file=360
+
+    land_present = True
     use_interpolated_pressure_level_data = False #Conditions the script on whether to expect data on sigma levels (if False) or pressure levels (if True). Script should be insensitive to this choice if both sets of files exist. 
 
     use_clim = True
 
     #Set time increments of input files (e.g. `monthly` for `atmos_monthly` files.
-    avg_or_daily='monthly'
+    avg_or_daily='daily'
 
     #Set the time frequency of output data. Valid options are 'months', 'all_time' or 'dayofyear'.
-    time_divisions_of_qflux_to_be_calculated='months'
+    time_divisions_of_qflux_to_be_calculated='dayofyear'
 
-    model_params = sagp.model_params_set(input_dir, delta_t=720., ml_depth=20., res=42)
+    model_params = sagp.model_params_set(args.datadir, delta_t=720., ml_depth=20., res=42)
 
-    if use_clim:
-        clim_str = '_clim'
-    else:
-        clim_str = ''
-    file_name = 'atmos_'+avg_or_daily+'_together_interp_new_height_temp_not_below_ground'+str(start_file)+'_'+str(end_file)+clim_str
+    
+    dataset, time_arr, size_list = io.read_data(args.datadir,exp_name,start_file,end_file,avg_or_daily,use_interpolated_pressure_level_data)
 
-    dataset, time_arr, size_list = io.read_data( base_dir,exp_name,start_file,end_file,avg_or_daily,use_interpolated_pressure_level_data, file_name=file_name)
 
-    land_array, topo_array = io.read_land(input_dir,base_exp_name,land_present,use_interpolated_pressure_level_data,size_list,land_file)
+    land_array, topo_array = io.read_land(args.rundir,args.EXP1,land_present,use_interpolated_pressure_level_data,size_list,land_file)
     dataset['land'] = (('lat','lon'),land_array)
 
     which_radiation_scheme_are_you_using = 'socrates'
 
-    check_surface_flux_dims(dataset, which_radiation_scheme_are_you_using)
+    dataset_new = check_surface_flux_dims(dataset, which_radiation_scheme_are_you_using)
     
-    qflux_calc(dataset, model_params, output_file_name, ice_file_name, groupby_name=time_divisions_of_qflux_to_be_calculated, ignore_ice_for_calculation=ignore_ice)
+    qflux_calc(dataset_new, model_params, output_file_name, ice_file_name, groupby_name=time_divisions_of_qflux_to_be_calculated, ignore_ice_for_calculation=ignore_ice)
 
 

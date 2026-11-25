@@ -79,7 +79,8 @@ def area_average(dataset, variable_name, model_params, land_ocean_all='all', lev
         return
 
     new_var_name=variable_name+'_area_av_'+land_ocean_all
-    dataset[new_var_name]=((axis_in), average)
+    print(average.data)
+    dataset[new_var_name]=((axis_in), average.data)
     
 def european_area_av(dataset, model_params, eur_area_av_input):
 

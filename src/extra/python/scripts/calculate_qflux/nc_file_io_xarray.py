@@ -49,14 +49,12 @@ def read_data( base_dir, exp_name, start_file, end_file, avg_or_daily, use_inter
             thd_files_exist=[os.path.isfile(s) for s in thd_files]
 
 
-        print(thd_files[0])
-
         if not(all(thd_files_exist)):
             raise EOFError('EXITING BECAUSE OF MISSING FILES', [thd_files[elem] for elem in range(len(thd_files_exist)) if not thd_files_exist[elem]])
 
         thd_file_size = [os.path.getsize(s) for s in thd_files]
 
-        mode_file_size = stats.mode(thd_file_size).mode[0]
+        mode_file_size = stats.mode(thd_file_size).mode #[0]
 
         thd_files_too_small = [thd_file_size[s] < 0.75*mode_file_size for s in range(len(thd_files))]
 
@@ -117,7 +115,7 @@ def read_data( base_dir, exp_name, start_file, end_file, avg_or_daily, use_inter
 
 
 
-    da_3d.coords['all_time'] = (('time'),time_arr/time_arr)
+    da_3d.coords['all_time'] = (('time'),(time_arr/time_arr).data) # CHANGED
 
     da_3d.coords['seq_months'] = (('time'),date_arr.month+12.*((date_arr.year-np.min(date_arr.year))))
 
@@ -215,12 +213,12 @@ def read_land( base_dir,exp_name,land_present, use_interpolated_pressure_level_d
     
     if land_file is not None:
         if(land_present or use_interpolated_pressure_level_data):
-            nc_file = base_dir+'exp/'+exp_name+land_file
+            nc_file = base_dir+land_file
             print(nc_file)
             try:
                 fh = Dataset(nc_file, mode='r')
             except (OSError, RuntimeError):
-                nc_file = base_dir+exp_name+land_file
+                nc_file = base_dir+land_file
                 fh = Dataset(nc_file, mode='r')
             if land_present:
                 try:
