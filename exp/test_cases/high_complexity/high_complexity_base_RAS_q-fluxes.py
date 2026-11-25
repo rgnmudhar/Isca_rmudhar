@@ -94,7 +94,8 @@ exp.namelist = namelist = Namelist({
         'roughness_moist':3.21e-05,            
         'two_stream_gray': False,     #Use the grey radiation scheme
         'do_socrates_radiation': True,
-        'convection_scheme': 'RAS_CONV', #Use the relaxed Arakawa Schubert convection scheme   
+        'do_ras': True,
+        'convection_scheme': 'RAS', #Use the relaxed Arakawa Schubert convection scheme
         'land_option' : 'input',                     # !Use land mask from input file
         'land_file_name' : 'INPUT/era-spectral7_T42_64x128.out.nc',  # !Tell model where to find input file
         'land_roughness_prefactor' :10.0,           # !How much rougher to make land than ocean
@@ -139,7 +140,7 @@ exp.namelist = namelist = Namelist({
         'do_qflux' : False, #Don't use analytic formula for q-fluxes 
         'load_qflux' : True, #Do load q-flux field from an input file
         'time_varying_qflux' : True, #q-flux will be time-varying
-        'qflux_file_name' : 'soc_ga3_bucket_jra_55_ice_temps', #Name of q-flux input file <-------- UPDATE POST-FIXED-SST RUN
+        'qflux_file_name' : 'high_complexity_base_RAS_ice_temps', #Name of q-flux input file <-------- UPDATE POST-FIXED-SST RUN
         'do_read_sst' : False, #Read in sst values from input file
         'do_sc_sst' : False, #Do specified ssts (need both to be true)
         # 'sst_file' : 'sst_clim_amip', #Set name of sst input file

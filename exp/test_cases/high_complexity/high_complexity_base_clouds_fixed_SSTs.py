@@ -54,6 +54,14 @@ diag.add_field('dynamics', 'height', time_avg=True, files=['atmos_daily'])
 diag.add_field('dynamics', 'omega', time_avg=True, files=['atmos_daily'])
 # diag.add_field('atmosphere', 'flux_u', time_avg=True, files=['atmos_daily'])
 
+# ADDED the following in order to generate q fluxes from fixed SST run later
+diag.add_field('mixed_layer', 't_surf', time_avg=True)
+diag.add_field('mixed_layer', 'flux_t', time_avg=True) #SH
+diag.add_field('mixed_layer', 'flux_lhe', time_avg=True) #LH
+#net (up) and down surface fluxes
+diag.add_field('socrates', 'soc_surf_flux_sw', time_avg=True)
+diag.add_field('socrates', 'soc_surf_flux_lw_down', time_avg=True)
+
 exp.diag_table = diag
 exp.inputfiles = inputfiles
 
@@ -75,7 +83,7 @@ exp.namelist = namelist = Namelist({
         'do_read_ozone': True,
         'ozone_file_name':'ozone_1990_cmip5',
         'ozone_field_name':'ozone_1990_cmip5',
-        'dt_rad': 4320, # CHANGED from 3600
+        'dt_rad': 3600, 
         'store_intermediate_rad':True,
         'chunk_size': 16,
         'use_pressure_interp_for_half_levels':False,
@@ -269,5 +277,5 @@ if __name__=="__main__":
         exp.set_resolution('T42', 40)
 
         exp.run(1, use_restart=True, num_cores=NCORES, overwrite_data=False, multi_node=False)
-        for i in range(2,721): # 720 months = 60 years
+        for i in range(2,361): # 360 months = 30 years, fewer for the fixed SST runs as we need 10-15y to equilibrate stratospheric water vapour, then another 10-15y for a climatology
             exp.run(i, num_cores=NCORES, overwrite_data=False, multi_node=False)
