@@ -107,7 +107,7 @@ def create_time_arr(num_years,is_climatology,time_spacing):
     return time_arr,day_number,ntime,time_units,time_bounds
 
 
-def output_multiple_variables_to_file(data_dict,lats,lons,latbs,lonbs,p_full,p_half,time_arr,time_units,file_name,number_dict, time_bounds=None, on_half_levels=False):
+def output_multiple_variables_to_file(data_dict,lats,lons,latbs,lonbs,p_full,p_half,time_arr,time_units,file_name,variable_name,number_dict,time_bounds=None, on_half_levels=False):
     """Default is to accept multiple data variables to put in the file.
     Input format in data_dict = {variable_name:variable_array}.
     Currently only accepts all 2D fields or all 3D fields. 
@@ -227,7 +227,7 @@ def output_multiple_variables_to_file(data_dict,lats,lons,latbs,lonbs,p_full,p_h
 
     # pdb.set_trace()
     output_array_netcdf = output_file.createVariable(variable_name,'f4', tuple(dims_list))
-
+    print(output_array_netcdf)
 
     latitudes[:] = lats
     longitudes[:] = lons
@@ -243,11 +243,13 @@ def output_multiple_variables_to_file(data_dict,lats,lons,latbs,lonbs,p_full,p_h
 
     if add_time:
         if type(time_arr[0])!=np.float64 and type(time_arr[0])!=np.int64 :
+            print('hi')
             times[:]     = date2num(time_arr,units='days since 0001-01-01 00:00:00.0',calendar='360_day')
         else:
             times[:]     = time_arr
 
     for variable_name in data_dict.keys():
+        print(variable_name)
         if is_thd:
             if add_time:
                 three_d_dims = ('time','pfull', 'lat','lon',)
@@ -263,6 +265,7 @@ def output_multiple_variables_to_file(data_dict,lats,lons,latbs,lonbs,p_full,p_h
             output_array_netcdf = output_file.createVariable(variable_name,'f4',two_d_dims)
 
         output_array_netcdf[:] = data_dict[variable_name]
+        print(output_array_netcdf)
 
     output_file.close()
 
@@ -271,4 +274,4 @@ def output_to_file(data,lats,lons,latbs,lonbs,p_full,p_half,time_arr,time_units,
     """Special interface for script wanting to output 1 variable only."""
 
     data_dict_to_send = {variable_name:data}
-    output_multiple_variables_to_file(data_dict_to_send,lats,lons,latbs,lonbs,p_full,p_half,time_arr,time_units,file_name,number_dict,time_bounds=time_bounds)
+    output_multiple_variables_to_file(data_dict_to_send,lats,lons,latbs,lonbs,p_full,p_half,time_arr,time_units,file_name,variable_name,number_dict,time_bounds=time_bounds)
