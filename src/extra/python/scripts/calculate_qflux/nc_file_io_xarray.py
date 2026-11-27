@@ -295,7 +295,6 @@ def output_nc_file(dataset, field_name, model_params, output_dict):
 
     cts.output_to_file(data_out,lats,lons,latbs,lonbs,p_full,p_half,time_arr,time_units,file_name,variable_name,number_dict,time_bounds)
 
-
 def output_data(dataset, model_params, variable_name_prefix, category_name):
 
     data_type_folder_name = dataset.data_type

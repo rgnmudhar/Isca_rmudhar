@@ -15,7 +15,10 @@ import matplotlib.pyplot as plt
 import os
 import pdb
 
-import argparse # added
+# ADDED:
+import argparse 
+import create_timeseries as cts
+from netCDF4 import date2num
 
 __author__='Stephen Thomson and Regan Mudhar'
 
@@ -49,8 +52,9 @@ def qflux_calc(dataset, model_params, output_file_name, ice_file_name=None, grou
         regrid_in_time(dataset, groupby_name)
 
         output_dict={'manual_grid_option':False, 'is_thd':False, 'num_years':1., 'time_spacing_days':12, 'file_name':output_file_name+'.nc', 'var_name':output_file_name}            
-        
-    io.output_nc_file(dataset,'masked_ocean_transport', model_params, output_dict)
+    
+    return dataset, 'masked_ocean_transport', output_dict
+    
 
 def time_gradient(data_in, delta_t):
 
@@ -163,16 +167,16 @@ def upper_ocean_heat_content(dataset, model_params, time_varying_ice, dayofyear_
         dataset.coords['months_on_dayofyear_ax']=(('dayofyear_ax'),months_on_dayofyear_ax)
 
         monthly_values = dataset['d_weighted_sst_data_dt_days'].groupby('months_on_dayofyear_ax').mean('dayofyear_ax')
-        dataset['d_weighted_sst_data_dt_months_from_days']=(('months_ax','lat','lon'), monthly_values)    
+        dataset['d_weighted_sst_data_dt_months_from_days']=(('months_ax','lat','lon'), monthly_values.data)    
 
     elif dayofyear_or_months=='months':
-        dataset['d_weighted_sst_data_dt']=(('months_ax','lat','lon'), d_weighted_sst_data_dt)    
+        dataset['d_weighted_sst_data_dt']=(('months_ax','lat','lon'), d_weighted_sst_data_dt.data)    
 
     elif dayofyear_or_months=='all_time':
-        dataset['d_weighted_sst_data_dt']=(('all_time_ax','lat','lon'), d_weighted_sst_data_dt)    
+        dataset['d_weighted_sst_data_dt']=(('all_time_ax','lat','lon'), d_weighted_sst_data_dt.data)    
 
 def net_surf_energy_flux(dataset, model_params, dayofyear_or_months='months'):
-    """Calculates the net surface energy flux to be used in q-flux calcuation, but also calcualtes a scaling factor such that the annual average of the area-averaged surface flux is zero."""
+    """Calculates the net surface energy flux to be used in q-flux calcuation, but also calculates a scaling factor such that the annual average of the area-averaged surface flux is zero."""
 
     print('doing net surf energy flux')
 
@@ -210,7 +214,7 @@ def net_surf_energy_flux(dataset, model_params, dayofyear_or_months='months'):
 
     net_surf_energy_fl=(scaling_factor*dataset['flux_sw_clim']+dataset['flux_lw_clim']-(model_params['sigma_sb']*dataset['sst_clim']**4.0)-dataset['flux_t_clim']-dataset['flux_lhe_clim'])*(1.0-dataset['land_ice_mask'])
 
-    dataset['net_surf_energy_fl']=((dayofyear_or_months+'_ax','lat','lon'), net_surf_energy_fl)
+    dataset['net_surf_energy_fl']=((dayofyear_or_months+'_ax','lat','lon'), net_surf_energy_fl.data)
     aav.area_average(dataset, 'net_surf_energy_fl', model_params, land_ocean_all='ocean_non_ice', axis_in=dayofyear_or_months+'_ax')
     
 def deep_ocean_heat_content(dataset, model_params, dayofyear_or_months='months'):
@@ -219,7 +223,7 @@ def deep_ocean_heat_content(dataset, model_params, dayofyear_or_months='months')
     aav.area_average(dataset, 'd_weighted_sst_data_dt', model_params, land_ocean_all='ocean_non_ice', axis_in=dayofyear_or_months+'_ax')
     d_deep_ocean_dt=(dataset['net_surf_energy_fl_area_av_ocean_non_ice']-dataset['d_weighted_sst_data_dt_area_av_ocean_non_ice'])
 
-    dataset['d_deep_ocean_dt']=(dataset['net_surf_energy_fl_area_av_ocean_non_ice'].dims, d_deep_ocean_dt)    
+    dataset['d_deep_ocean_dt']=(dataset['net_surf_energy_fl_area_av_ocean_non_ice'].dims, d_deep_ocean_dt.data)    
 
 def ocean_transport(dataset, model_params, dayofyear_or_months='months'):
 
@@ -228,9 +232,9 @@ def ocean_transport(dataset, model_params, dayofyear_or_months='months'):
     masked_land_transport=ocean_transport*(dataset['land_ice_mask'])
 
 
-    dataset['ocean_transport']=((dayofyear_or_months+'_ax','lat','lon'), ocean_transport)    
-    dataset['masked_ocean_transport']=((dayofyear_or_months+'_ax','lat','lon'), masked_ocean_transport)
-    dataset['masked_land_transport']=((dayofyear_or_months+'_ax','lat','lon'), masked_land_transport)    
+    dataset['ocean_transport']=((dayofyear_or_months+'_ax','lat','lon'), ocean_transport.data)    
+    dataset['masked_ocean_transport']=((dayofyear_or_months+'_ax','lat','lon'), masked_ocean_transport.data)
+    dataset['masked_land_transport']=((dayofyear_or_months+'_ax','lat','lon'), masked_land_transport.data)    
 
 def regrid_in_time(dataset, groupby_name):
     """ Simple routine to repeat arrays in all_time-averaging situations, so that monthly data still output."""
@@ -337,13 +341,11 @@ if __name__ == "__main__":
     avg_or_daily='daily'
 
     #Set the time frequency of output data. Valid options are 'months', 'all_time' or 'dayofyear'.
-    time_divisions_of_qflux_to_be_calculated='dayofyear'
+    time_divisions_of_qflux_to_be_calculated='months'
 
     model_params = sagp.model_params_set(args.datadir, delta_t=720., ml_depth=20., res=42)
 
-    
     dataset, time_arr, size_list = io.read_data(args.datadir,exp_name,start_file,end_file,avg_or_daily,use_interpolated_pressure_level_data)
-
 
     land_array, topo_array = io.read_land(args.rundir,args.EXP1,land_present,use_interpolated_pressure_level_data,size_list,land_file)
     dataset['land'] = (('lat','lon'),land_array)
@@ -352,6 +354,26 @@ if __name__ == "__main__":
 
     dataset_new = check_surface_flux_dims(dataset, which_radiation_scheme_are_you_using)
     
-    qflux_calc(dataset_new, model_params, output_file_name, ice_file_name, groupby_name=time_divisions_of_qflux_to_be_calculated, ignore_ice_for_calculation=ignore_ice)
+    dataset_to_save, label, output_dict = qflux_calc(dataset_new, model_params, output_file_name, ice_file_name, groupby_name=time_divisions_of_qflux_to_be_calculated, ignore_ice_for_calculation=ignore_ice)
 
+    # Added following lines to replace: io.output_nc_file(dataset_to_save, label, model_params, output_dict)
+    # create times
+    import create_timeseries as cts
+    from netCDF4 import date2num
+    try:
+        output_dict['num_years']
+    except KeyError:
+        is_climatology=True
+    else:
+        if output_dict['num_years']==1:
+            is_climatology=True
+        else:
+            is_climatology=False
+        num_years=output_dict['num_years']
+    time_arr,day_number,ntime,time_units,time_bounds=cts.create_time_arr(num_years,is_climatology,output_dict['time_spacing_days'])
+    times = date2num(time_arr,units='days since 0001-01-01 00:00:00.0',calendar='360_day')
+
+    # create dataset and save
+    ds = dataset_to_save[label].to_dataset().rename({'months_ax':'time', label:output_file_name}).assign_coords({'time':times})
+    ds.to_netcdf(output_file_name+'.nc')
 
