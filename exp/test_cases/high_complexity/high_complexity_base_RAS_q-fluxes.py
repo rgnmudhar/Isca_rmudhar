@@ -21,14 +21,15 @@ cb= SocratesCodeBase.from_directory(GFDL_BASE)
 # create an Experiment object to handle the configuration of model parameters
 # and output diagnostics
 
-exp = Experiment('base_set-up_RAS', codebase=cb)
+exp_name = 'base_set-up_RAS'
+exp = Experiment(exp_name, codebase=cb)
 exp.clear_rundir()
 
 do_simple_global_value = False
 
 inputfiles = [os.path.join(GFDL_BASE,'input/rrtm_input_files/ozone_1990.nc'),\
                 os.path.join(base_dir,'input/era-spectral7_T42_64x128.out.nc'),\
-                os.path.join(base_dir,'input/soc_ga3_bucket_jra_55_ice_temps.nc'),\
+                os.path.join(base_dir,'input/high_complexity_'+exp_name+'_fixed_SSTs_ice_temps.nc'),\
                 os.path.join(base_dir,'input/sp_lw_ga3_1.txt'),\
                 os.path.join(base_dir,'input/sp_sw_ga3_0.txt'),\
                 os.path.join(base_dir,'input/siconc_clim_amip.nc'),\
@@ -140,7 +141,7 @@ exp.namelist = namelist = Namelist({
         'do_qflux' : False, #Don't use analytic formula for q-fluxes 
         'load_qflux' : True, #Do load q-flux field from an input file
         'time_varying_qflux' : True, #q-flux will be time-varying
-        'qflux_file_name' : 'high_complexity_base_RAS_ice_temps', #Name of q-flux input file <-------- UPDATE POST-FIXED-SST RUN
+        'qflux_file_name' : 'high_complexity_'+exp_name+'_fixed_SSTs_ice_temps.nc', #Name of q-flux input file
         'do_read_sst' : False, #Read in sst values from input file
         'do_sc_sst' : False, #Do specified ssts (need both to be true)
         # 'sst_file' : 'sst_clim_amip', #Set name of sst input file
